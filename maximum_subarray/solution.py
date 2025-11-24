@@ -1,38 +1,31 @@
 class Solution:
     def maxSubArray(self, nums: List[int]) -> int:
         """
-        The goal of the problem is to find the sub-array that yields the largest sum. One way to do this is to divide
-        the array continuously down into individual elements based on the mid point of each sub array and then start
-        taking sums. At each level of the divide tree, take the sum of the current sub-array, or one of its child
-        divides. Whichever is larger. Return the overall result of this.
+        Hint: This problem can be solved in O(n) time. Consider the trivial case of an array with only positive numbers.
+        How would the solution be found? Now consider what happens when we introduce negative numbers. How does our
+        iteration change when we encounter negative numbers? What happens to the sum that drives this decision making?
 
-        time: dividing the array creates O(log(n)) calls. Looping over the array to find the sum takes at most O(n) time
-              and this needs to be done at each divide
-              overall: O(nlog(n))
-        memory: O(log(n)) --> call stack and for number of array copies
+        For the trivial case, we would just add every number together. An array which only has positive number will have
+        a maximum sum by adding all the numbers in the array. What happens if there are negative numbers in the array?
+        If adding the current number to the sum of an existing sub array results in a number less than the current 
+        number, start over with the current element as the current element is greater than the sum of the previous
+        elements. This makes sense as a single element in the array is itself a sub-array. If this single element is
+        greater than the sum of the previous n-1 elements, by definition this is the solution to the problem.
+        If, however, the sum is greater than the current number, continue expanding the array even if the current element
+        is negative.
+
+        time: O(n)
+        memory: O(1)
         """
-        return self.helper(nums)
-    
-    def helper(self, sub_nums) -> int:
-        """
-        Helper function handles divide and conquer
-        """
-        # Base case there is only one element
-        if len(sub_nums) == 1:
-            return sub_nums[0]
-        
-        # Find mid_pt of array
-        mid_pt = len(sub_nums) // 2
-
-        # Split the array
-        left_sum = self.helper(sub_nums[:mid_pt])
-        right_sum = self.helper(sub_nums[mid_pt:])
-
-        # Get sum of current array
-        t_sum = sum(sub_nums)
-
-        # Return the largest sum
-        split_sum_max = max(left_sum, right_sum)
-        return max(split_sum_max, t_sum)
-
+        if len(nums) == 1:
+            return nums[0]
+        res = float(-inf)
+        cur_sum = 0
+        for n in nums:
+            if cur_sum + n < n:
+                cur_sum = n
+            else:
+                cur_sum += n
+            res = max(cur_sum, res)
+        return res
         
