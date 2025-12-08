@@ -1,57 +1,47 @@
 class Solution:
     def spiralOrder(self, matrix: List[List[int]]) -> List[int]:
         """
-        The question is asking us to print all elements in the matrix in spiral order starting at the top left corner.
-        This can be accomplished by tracking the corners of the matrix, and interating until the top and bottom corners
-        on each size of the matrix cross each other. We loop through each row and column, and then move each corner
-        inwards.
-        
-        time: O(nm) where n and m are the dimensions of the matrix
-        memory: O(nm) --> used to store the output
-        """
-        # Define corners
-        top_left = [0, 0]
-        bottom_left = [len(matrix)-1, 0]
-        top_right = [0, len(matrix[0])-1]
-        bottom_right = [len(matrix)-1, len(matrix[0])-1]
+        Hint: How are you tracking the bounds of what elements you should be iterating over?
+        Can track four pointers: Left, right, top bottom. I change each pointer afer using it. For example, the first
+        iteration is going from left to right (I keep the left pointer in place for this iteration since I need it for
+        going right to left on the bottom row). Then I go from top to bottom in the right column. I lower the top pointer.
+        Then I go from right to left on the bottom row. I move the right pointer inwards. Then I go from bottom to top.
+        I increment the bottom pointer and move the left pointer over one. I then repeat the algorithm. To help solve
+        edge cases, have the right and bottom pointers be out of bounds initially.
 
-        # Iterate through matrix
+        time: O(nm) --> nxm matrix
+        memory: O(nm) 
+        """
+        l, r, t, b = 0, len(matrix[0]), 0, len(matrix)
         res = []
-        while self.__check_conditions__(top_left, bottom_right):
-            # Check edge case where all corners are the same square
-            if top_left == top_right == bottom_right == bottom_left:
-                res.append(matrix[top_left[0]][top_left[1]])
+
+        while r > l and b > t:
+            # Loop top row from left to right
+            for i in range(l, r):
+                res.append(matrix[t][i])
+            # Increment top pointer
+            t += 1
+            if t >= b:
                 break
-            # Loop top row.
-            for i in range(top_left[1], top_right[1]):
-                row = top_left[0]
-                res.append(matrix[row][i])
-            # Loop right column.
-            for i in range(top_right[0], bottom_right[0]):
-                col = top_right[1]
-                res.append(matrix[i][col])
-            # Loop bottom row
-            for i in range(bottom_right[1], bottom_left[1], -1):
-                row = bottom_right[0]
-                res.append(matrix[row][i])
-            # Loop left column
-            for i in range(bottom_left[0], top_left[0], -1):
-                col = bottom_left[1]
-                res.append(matrix[i][col])
-            # Update corners
-            top_left = [top_left[0]+1, top_left[1]+1]
-            bottom_left = [bottom_left[0]-1, bottom_left[1]+1]
-            top_right = [top_right[0]+1, top_right[1]-1]
-            bottom_right = [bottom_right[0]-1, bottom_right[1]-1]
-        
+            
+            # Loop right column from top to bottom
+            for i in range(t, b):
+                res.append(matrix[i][r-1])
+            # Decrement right pointer
+            r -= 1
+            if r <= l:
+                break
+
+            # Loop bottom row from right to left
+            for i in range(r-1, l-1, -1):
+                res.append(matrix[b-1][i])
+            # Update bottom pointer
+            b -= 1
+
+            # Loop left column from bottom to top
+            for i in range(b-1, t-1, -1):
+                res.append(matrix[i][l])
+            # Update left pointers
+            l += 1
         return res
-        
-    def __check_conditions__(self, top_left, bottom_right):
-        """
-        Checks conditions to end looping. Only need to check one pair of diametricaly opposite corners. Checks to see
-        if they have passed each other
-        """
-        if top_left[0] > bottom_right[0] and top_left[1] > bottom_right[1]:
-            return False
-        return True
-        
+
