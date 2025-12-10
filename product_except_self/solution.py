@@ -1,38 +1,30 @@
 class Solution:
     def productExceptSelf(self, nums: List[int]) -> List[int]:
         """
-        The ask is to return an array where arr[i] is the product of all elements in the input array nums except for 
-        nums[i]. The naive approach is to get the product of the entire array and then loop through nums, dividing out
-        nums[i] from the solution. The edge case is if there is a 0 present in the array, as dividing by 0 is undefined.
-        If there is a single 0, then I can ignore that 0 and find the product of the rest of the elements of nums. This
-        will be the answer for nums[i] == 0. If there is more than 1 0, then the solution is 0 for every element.
+        To solve this problem without division, I need to use a prefix and postfix array. The prefix array's elements will
+        be the product of each element up to i not including i and the postfix will be the product of every element
+        starting at the end of the array excluding i. The result will the prefix[i-1] * postfix[i+1]
 
         time: O(n)
         memory: O(n)
         """
-        # Base case for product
-        prod = 1
-        # Records solution for case where there is a single 0
-        single_zero_found = False
+        from collections import deque
+        prefix = [1]
+        postfix = deque()
+        postfix.append(1)
 
-        # Find nums product
-        for n in nums:
-            if n == 0:
-                if not single_zero_found:
-                    single_zero_found = True
-                else:
-                    prod = 0
-            else:
-                prod *= n
+        # Create prefix
+        for i in range(len(nums)):
+            prefix.append(prefix[i] * nums[i])
+        # Create postfix
+        for i in range(len(nums)-1, -1, -1):
+            postfix.appendleft(postfix[0] * nums[i])
         
-        # Build solution
+        # Create result
         res = []
-        for n in nums:
-            if single_zero_found:
-                if n == 0:
-                    res.append(prod)
-                else:
-                    res.append(0)
-            else:
-                res.append(prod // n)
+        prefix_ctr = 1
+        for i in range(len(nums)):
+            res.append(prefix[prefix_ctr-1] * postfix[i+1])
+            prefix_ctr += 1
         return res
+        
