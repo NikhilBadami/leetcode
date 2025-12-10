@@ -1,66 +1,47 @@
 class Solution:
     def threeSum(self, nums: List[int]) -> List[List[int]]:
         """
-        Hint: After sorting the array, how can we ensure we are not processing duplicates?
+        The goal is to find all combinations of three numbers that add to 0 in the input array. I can accomplish this by
+        1: sorting the input and 2: scanning through the input for solutions. In an outer loop, I can scan through the
+        array and select a number at nums[i]. I then subtract this number from 0, which becomes my target for the second
+        loop. The second loop searches for two numbers that add to this target, essentially reducing to the solution for
+        two-sum for a sorted input array. If I find a solution, then I append these three numbers to the result. One
+        optimization is if I have a negative target but the numbers are all positive, I should end the overall loop as
+        positive numbers will never sum to a negative number.
 
-        Need to find all triplets in the array such that the sum is 0 and the indices are unique. The final solution cannot
-        contain duplicate triplets.
+        I need to consider the possibility of duplicates as well. If there are duplicate numbers, every time I start the
+        inner loop I will encounter the same solution first. What I should do is find every solution for this number
+        and then skip duplicates in the outer loop.
 
-        The first step of this solution is to sort the array. The reason for this is as we iterate through the array,
-        we create a target, 0 - nums[i], and then pass this to a function 2-sum-array-is-sorted, the solution for which
-        is already known. The input could have multiple of the same number and we need to make sure we do not process
-        duplicate triplets. Say we had the following array: [-3,-3,0,1,2,3]. This array has the following solutions:
-        [-3,0,3] and [-3,1,2]. The problem here is if we start the two-sum solution from the beginning from each -3,
-        we will encounter the same solution first each time, namely [0,3]. Howerver, we can run the two-sum solution
-        in such a way that we find all possible solutions for this number, and then skip all duplicates in the main loop,
-        thus ensuring that we do not create duplicate triplets. Another efficiency is possible as well: after sorting,
-        once the input number is greater than 0, there is no reason to continue processing because positive numbers cannot
-        sum to 0.
-
-        Two sum solution:
-
-        Using the sorted array, create a left and right pointer at the start and end of the array. If the sum of nums[l]
-        + nums[r] is too large, decrement the right pointer and if it is too small, increment the left pointer. We need
-        to make a modification to this algorithm for this problem to ensure we are finding all unique solutions. Once
-        we have found a single solution, we can either decrement the right pointer or increment the left pointer. If the
-        next number is the same as the previous number, keep moving the pointer until it is a different number or it
-        passes the other pointer. In the outer loop, move the pointer until the number is different.
-
-        time: O(nlog(n)) to sort the array
-              O(n^2) worst case to process the sorted array
-        memory: O(n) --> 2n technicaly, n memory to sort and n memory to store solution
+        time: O(n^2)
+        memory: O(m) --> m is the number of triplets that sum to 0
         """
-        # Sort the input array
+        # Sort array
         nums.sort()
 
-        # Iterate through sorted array
         res = []
-        i = 0
-        while i < len(nums):
-            if nums[i] > 0:
-                # There are no other possible solutions
-                break
+        for i in range(len(nums)):
+            # Skip duplicates
+            if i > 0 and nums[i] == nums[i-1]:
+                continue
             target = 0 - nums[i]
-            # Search for all solutions that sum to target using the 2-sum solution for sorted arrays
-            l = i + 1
-            r = len(nums) - 1
+            if target < 0:
+                # All numbers after nums[i] are positive and will never sum to target
+                break
+            l, r = i+1, len(nums) - 1
             while l < r:
-                s = nums[l] + nums[r]
-                if s > target:
+                if nums[l] + nums[r] > target:
                     r -= 1
-                elif s < target:
+                elif nums[l] + nums[r] < target:
                     l += 1
                 else:
-                    # We have found a possible solution
                     res.append([nums[i], nums[l], nums[r]])
-                    # We choose to increment the left pointer. We need to do this until we find a new number or the left
-                    # pointer passes the right pointer
                     l += 1
+                    r -= 1
+                    # Ensure duplicates are skipped
                     while l < r and nums[l] == nums[l-1]:
                         l += 1
-            i += 1
-            # Since we have already retrieved all solutions for nums[i], we need to skip any duplicate occurrences
-            while i < len(nums) and nums[i] == nums[i-1]:
-                i += 1    
+                    while l < r and nums[r] == nums[r+1]:
+                        r -= 1
         return res
-
+        
