@@ -1,32 +1,39 @@
 class Solution:
     def characterReplacement(self, s: str, k: int) -> int:
         """
-        Hint: Consider how you are setting your max frequency and if it is calculated in all places it should
-        be calculated in
+        Given a string, I need to find the longest substring with only one letter. I am allowed to replace up to k
+        character in my sub-string in order to achieve this. I don't need to literally replace the characters, I just need
+        to know how many replacements I can do. I know that I can find maximal sub-strings using a sliding window. As I
+        expand the window, I only need to know how many replacements are left. When I run out of replacements, I need
+        to start shirking the window.
 
-        This character can be solved with a sliding window with the condition that we can make the necessary number of
-        replacements within the window. This can be accomplished by tracking the count of each character in the window
-        and checking to see if we can replace the less frequent characters with the most frequent characters. If we
-        have window size window_size and max count max_count, the condition for the window is
-        window_size - max_count <= k. If this condition is true, we can continue expanding the  window and if not, we
-        need to shrink the window.
+        How do I shrink the window? In my window, I should maintain a count of the frequency of each character. As
+        I expand the window, I check to see if window_size - most_freq_char_count >= k. This is a way of checking if
+        I have enough replacements to make the other characters in the window match the most frequent character. If
+        I can, then the window is valid and I can keep expanding. If this condition fails, I start shrinking the window
+        until the condition is true again.
 
         time: O(n)
-        memory: O(1)
+        memory: O(n)
         """
+        freqs = {}
         l, r = 0, 0
-        freq = {}
-        res = 0
+        max_len = 0
 
         while r < len(s):
-            freq[s[r]] = 1 + freq.get(s[r], 0)
-
-            # Check to see if the window size is invalid
-            # Note that the max count is updated on each check
-            while (r - l + 1) - max(freq.values()) > k:
-                freq[s[l]] -= 1
-                l += 1
-            
-            res = max(res, r - l + 1)
+            freqs[s[r]] = freqs.get(s[r], 0) + 1
+            window_size = (r - l) + 1
+            most_freq_char_count = freqs[max(freqs, key=freqs.get)]
+            if window_size - most_freq_char_count <= k:
+                max_len = max(max_len, window_size)
+            else:
+                # Shrink window
+                while not (window_size - most_freq_char_count <= k) and l < r:
+                    freqs[s[l]] = freqs[s[l]] - 1
+                    l += 1
+                    most_freq_char_count = freqs[max(freqs, key=freqs.get)]
+                    window_size = (r - l) + 1
+            # Expand window
             r += 1
-        return res
+        return max_len
+        
