@@ -1,30 +1,28 @@
 class Solution:
     def maxProfit(self, prices: List[int]) -> int:
         """
-        The idea is to find a day (index) in the array to buy a stock, and then find a subsequent index in the array to 
-        sell the stock where I can make a profit. Consider the following example:
+        Goal is to maximize profit by selling the stock on a day where the price is higher than the day I bought it, in
+        otherwords, max(sell_price - buy_price). A naive solution to this problem would be to iterate over the entire array
+        for each possible price and record the maximum profit. This solution would be O(n^2).
 
-        [7,8,1,5,3,6,4]
-
-        The naive solution would be to iterate over the entire array twice, checking the max profit from each index.
-        A better way would be to use a sliding window to track the maximum profit starting from a particular index.
-        As I iterate, if I encounter a value at the right pointer less than the less pointer, I reset the left pointer
-        to the right pointer. The reason why is because I've found this index with a value less than my current buy
-        day so I know that for any subsequent day, it would be more profitable to sell based on this new buy day
-        than my current buy day. Any combination I can come up with with subsequent prices would always be more profitable
-        with the lower price. Or as common sense would dicate, its always better to get a lower price.
+        A better solution, however, would be to realize that while iterating, if I encounter a price that is lower than
+        the current price I am consdiering, it makese sense to move my "buy day" to this price, as any sell price that
+        comes after this would be greater assuming I buy on this cheaper day than the current day I am considering. By
+        doing this I can reduce the run-time complexity of the algorithm to O(n)
 
         time: O(n)
-        memory: O(1) --> Only need to allocate left and right pointers and result variable
+        memory: O(1)
         """
-        l, r = 0, 0
-        profit = -1
-
+        # Handle edge case where there is only one element in the prices array
+        max_price = 0
+        if len(prices) == 0:
+            return max_price
+        
+        l, r = 0, 1
         while r < len(prices):
+            max_price = max(max_price, prices[r] - prices[l])
             if prices[r] < prices[l]:
                 l = r
-            else:
-                profit = max(profit, prices[r] - prices[l])
-                r += 1
-        return profit
+            r += 1
+        return max_price
         
