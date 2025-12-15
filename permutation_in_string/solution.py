@@ -1,61 +1,52 @@
 class Solution:
     def checkInclusion(self, s1: str, s2: str) -> bool:
         """
-        I need to find out if s2 contains some ordering of the characters in s1. This means that the count of each character
-        for some substring of s2 should match the count of characters in s1. Additionally, the characters should be
-        continguous, i.e., if s1 = abc and s2 = eebacee then s2 contains a permutation of s1, but if it equaled eebeac, then
-        it would not, because there is an e between the b and the other characters.
+        I need to find if a permutation of s1 exists in s2. Basically, I need to find a substring in s2 that has the same
+        characters with the same frequencies of s1, in other words, an anagram of s1. I can pre-process s1 to find out
+        what characters are in s1 along with their frequencies. I know that the substring will be len(s1), so I can use a
+        window of this size to scan through s2 and check if this window contains an anagram of s1.
 
-        I can preprocess s1 to get the count of each character in that string. Then I can process s2 using a sliding
-        window to see if a permutation of s1 is a substring of s2. I iterate through s2 looking for a character that
-        is in s1. If I find a character in s1, I begin expanding the window and decrement the character count in the
-        frequency map. If I am able to create a window that contains all the characters with the exact counts as in s1,
-        I return true as I have found what I am looking for.
+        The straight forward way to do this is for each window in s2, calculate its frequencies and compare this frequency
+        map to that of s1. If n is the size of s1 and m is the size of s2, I will scan a window of size m up to n times
+        to determine if a permutation of s1 exists in s2. This has a runtime of nm.
 
-        How do I shrink the window? If while iterating, I encounter a character that is not in s1, I need to recover the
-        counts of each character in the string. I can do this by shrinking the window and incrementing each count for
-        each character I encounter, until I reach the right pointer. Note that encountering a single character not in s1
-        essentially means this window is entirely invalid, and I need to essentially discard it.
+        I can make this run faster. I can create a window in s2 and calculate its frequencies. For both this window and s1,
+        I make the size of the map 26, i.e., I include a count for every possible letter in the alphabet instead of just
+        the letters that exist in s1. Then, for each window, I simply update the counts of the letters at the left and
+        right pointers, and then perform an equality check between the two maps. This equality check takes O(26) = O(1)
+        time and I perform this check at most m times.
 
-        time: O(n + m) --> n is the size of s1 and m is the size of s2. n time for counting characters in s1 and m time
-        for searching for a permutation substring in s2
-        memory: O(n)
+        time: O(m) --> m is the size of s2
+        memory: O(1) --> technically O(52)
         """
-        # Build s1 frequency map
+        # Check if s1 > s2:
+        if len(s1) > len(s2):
+            return False
+        # Create map in s1 of character frequencies
+        import string
         s1_freqs = {}
+        for c in string.ascii_lowercase:
+            s1_freqs[c] = 0
         for c in s1:
-            s1_freqs[c] = s1_freqs.get(c, 0) + 1
+            s1_freqs[c] = s1_freqs[c] + 1
+        
+        # Create a window in s2 and initially pre-process it in the same way as s1
+        l, r = 0, len(s1) - 1
+        window_freqs = {}
+        for c in string.ascii_lowercase:
+            window_freqs[c] = 0
+        for i in range(l, r+1):
+            window_freqs[s2[i]] = window_freqs[s2[i]] + 1
+        
+        # Check if permutation exists in s2
+        while r < len(s2):
+            if window_freqs == s1_freqs:
+                return True
+            window_freqs[s2[l]] = window_freqs[s2[l]] - 1
+            l += 1
+            r += 1
+            if r >= len(s2):
+                break
+            window_freqs[s2[r]] = window_freqs[s2[r]] + 1
 
-        # Search s2 for a permutation of s1
-        i = 0
-        while i < len(s2):
-            if s2[i] in s1_freqs.keys():
-                # Search for permutation of s1 in s2
-                l, r = i, i
-                while r < len(s2):
-                    # Check conditions if window is invalid
-                    if s2[r] not in s1_freqs.keys() or s1_freqs[s2[r]] <= 0:
-                        # Shrink window and recover count of characters
-                        while l < r:
-                            s1_freqs[s2[l]] = s1_freqs[s2[l]] + 1
-                            l += 1
-                        # I do not want to re-process any characters from this window because I know that up
-                        # until the character at r, ther is no possible valid substring
-                        i = r
-                        break
-                    else:
-                        # If window is valid, check if the solution has been found
-                        s1_freqs[s2[r]] = s1_freqs[s2[r]] - 1
-                        all_zero = True
-                        for c in s1_freqs.keys():
-                            if s1_freqs[c] != 0:
-                                all_zero = False
-                                break
-                        if all_zero:
-                            # Solution has been found
-                            return True
-                        r += 1
-            else:
-                i += 1
         return False
-
