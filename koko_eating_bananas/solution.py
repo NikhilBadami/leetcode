@@ -1,64 +1,47 @@
 class Solution:
     def minEatingSpeed(self, piles: List[int], h: int) -> int:
         """
-        The parameter I'm searching for is k, the minimum speed koko can eat at such that she can eat all the bananas
-        within h hours. The restrictions are, all bananas must be eaten within h hours. Koko will eat at a rate of k
-        bananas per hour, but if she encounters a pile with less than k bananas, she will eat that whole pile only.
+        Need to find k, the rate at which koko can leisurely eat bananas before the guards return. I'm given a list of piles,
+        which prepresent the amount of bananas in each piles, and h, the amount of time koko has before the guards return.
+        For each pile, koko will eat at most k bananas. If k > piles[i], koko will only eat that pile for that hour. She
+        will not  begin eating another pile.
 
-        One way to do this would be to test different values of k starting at 1 and then iterating through the piles
-        list to check how quickly the bananas could be eaten at this rate k. For each hour, I would decrement the current
-        pile by k, or exhaust it if the number of bananas remaining is less than k and then move on to the next pile on the
-        next hour. If I can exhaust every pile before h has completed, this is a valid value for k.
+        The parameter I'm searching for is k. I want to choose the smallest k such that koko can eat all bananas in h hours.
+        Are there any limits on k? Yes, the largest pile in the piles array. There is no point in checking values beyond
+        this pile, because koko will only ever eat one pile in an hour. So I know that k is bounded by (0, max(piles)]
 
-        However, I need to return the minimum value of k. Again, I could start iterating from 1, but this could be
-        inefficient if the true k value is very large. If I consider all possible values of k as a sorted array, I
-        could use binary search to find it. What would the bounds of the search be? Given a list of piles, what is the
-        most amount of bananas koko can eat in an hour that would make sense? It would the the largest pile, since koko
-        will never eat more bananas than there are in a pile, the largest pile is the upper bound for the search. So the
-        bounds are 1 <= k <= max(piles)
+        In a sense, I'm searching an "array" of values where the values are from 0 to max(piles) in increments of 1. The
+        target is the smallest value k such that koko can eat all bananas in h hours. This means I will try multiple k's and
+        record each valid answer as I find it, updating only when I find a smaller valid answer. This also means that for
+        each candidate k, I need to loop through piles to check if the k is valid.
 
-        What are the exit conditions? Normally in binary search you search for a target value. What is my target value in
-        this search? Maybe there is no specific target, rather the exit condition is based on how quickly koko can eat
-        at the given rate k. For a given rate k, if she can eat the bananas in less than h hours, we need to find a smaller
-        value of k. If she can't eat all the bananas in h hours, we need to find a larger value of k. The search ends when
-        we find a value of k such that koko eats all the bananas in exactly h hours
+        I can search for k using a linear scan, which would be O(max(p) * n) where p represents values in piles and n is the
+        number of piles. If I use binary search, however, this runtime improves significantly.
 
-        time: to find k: O(log(b)) where b is the largest pile in piles
-              to test a given value of k: O(h) where h is the number of hours
-              to find max in piles: O(p) where p is the number of piles
-              overall: O(hlog(b) + p)
+        time: O(log(max(p)) * n)
         memory: O(1)
-
-        *********************************
-        Keeping the above in tact for future reference but, the search conditions ended up being dependent on the hours.
-        If after eating all piles, it took koko longer than h hours at a particular k, we knew to search for values 
-        greater than the current k. If she ate quickly enough, i.e., hr < h, then this is a valid value of k. However, we
-        are not interested in the first valid value of k we find, instead, we want the fastest k she can eat in. So if
-        we find a valid value, we keep searching.
         """
         import math
-        l, r = 1, max(piles)
+        # Get max possible k value
+        max_p = max(piles)
 
-        # Search for the optimal value of k.
+        best_k = max_p
+        l, r = 1, max_p
+        # Search for valid k
         while l <= r:
-            k = l + (r - l) // 2
-            # Test if this value of k can eat all the bananas in exactly h hours
-            # Counter for piles
-            p = 0
-            # Counter for hours
-            hr = 0
-            while p < len(piles):
-                pile = piles[p]
-                # Determine number of hours it takes to eat pile
-                hr += math.ceil(pile / k)
-                p += 1
-            if hr > h:
-                # This k is too slow
-                l = k + 1
+            mid_pt = l + (r-l) // 2
+            # Check if k is valid
+            num_hours = 0
+            for p in piles:
+                # Get number of hours to eat given pile at candidate k
+                num_hours += math.ceil(p / mid_pt)
+            # Update search and best_k based on results
+            if num_hours > h:
+                # Took too long, need to try larger k values
+                l = mid_pt + 1
             else:
-                # This k is valid, but there could be a better one
-                r = k - 1
-        return l
+                # Update k but keep searching for better values
+                best_k = min(best_k, mid_pt)
+                r = mid_pt - 1
+        return best_k
 
-
-        
