@@ -24,23 +24,18 @@ class Solution:
         q = deque()
         q.append(root)
         while len(q) != 0:
-            # Create q to store children of nodes popped from main q
-            level_q = deque()
-            # Create boolean to track if the node being popped from the main q is the first for the level
-            is_first = True
-            while len(q) != 0:
+            # Get number of nodes in level
+            level_size = len(q)
+            for i in range(level_size):
                 node = q.popleft()
-                if is_first:
+                if i == 0:
+                    # This is the first node in the level and therefore the right most node
                     res.append(node.val)
-                    is_first = False
-                # Add children of node to level q so main q can be exhausted for the level
                 if node.right:
-                    level_q.append(node.right)
+                    q.append(node.right)
                 if node.left:
-                    level_q.append(node.left)
-            # Empty the level q back into the main node
-            while len(level_q) != 0:
-                q.append(level_q.popleft())
+                    q.append(node.left)
+
         return res
             
         
