@@ -1,38 +1,33 @@
 class Solution:
     def subsets(self, nums: List[int]) -> List[List[int]]:
         """
-        A subset is a selection of array elements that may not be continguous and may be empty. When creating all subsets,
-        one possible approach is to view the creation as a tree. At each element in the tree, I have the option to either
-        include the current element in the subset, or to not include it. This will naturally create a tree where each
-        of these choices creates divergent paths. I can iterate through this tree using breadth first search
+        Ask is to return a list containing all subsets of the input list nums. A subset is a potentially non-contiguous
+        set of elements within nums, including the empty set. This can be created by iterating through the nums array.
+        At each element, I can choose to include the current element or not include it. This naturally creates a branching
+        structure that forms a tree, which can then be iterated over to create all of the subsets. The base case is the
+        empty set. From there, we follow the algorithm described above and build all possible sets. This approach
+        does not create duplicates. Both DFS and BFS could be used, but for simplicity in implementation, use BFS
 
-        time: For each element, I can make two branching choices so 2^n time
-              O(2^n)
-        memory: O(2^n) since I need to store each subset
+        time: O(2^n)
+        memory: O(2^n)
         """
         from collections import deque
         q = deque()
-        # Start with the empty set
         q.append([])
-        # index for nums list
         i = 0
         while i < len(nums):
-            # For each given nums element, I need to pop each possible subset I've seen so far and make the decision
-            # to either add the current element to it or not. I can store these elements in a temporary q
-            temp_q = deque()
-            while len(q):
-                subset = q.popleft()
-                # add current element to subset
-                new_subset = subset.copy()
-                new_subset.append(nums[i])
-                # Store both new and old subset in temp q
-                temp_q.append(subset)
-                temp_q.append(new_subset)
-            # Add all elements back into the queue
-            while len(temp_q):
-                q.append(temp_q.popleft())
-            
-            # Move to the next element of nums
+            # Get number of sets currently in q
+            num_sets = len(q)
+            for _ in range(num_sets):
+                # Pop each set off of the q. Either include the element currently at i, or don't include it. Add both
+                # sets back to the q
+                s = q.popleft()
+                new_s = s.copy()
+                new_s.append(nums[i])
+                q.append(s)  # Didn't include nums[i]
+                q.append(new_s)  # Included nums[i]
             i += 1
+        
+        # At the end of the iteration, the q contains all possible sub-sets of nums
         return list(q)
         
