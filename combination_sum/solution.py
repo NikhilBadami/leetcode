@@ -1,74 +1,56 @@
 class Solution:
     def combinationSum(self, candidates: List[int], target: int) -> List[List[int]]:
         """
-        The goal is to find all combinations of the numbers in candidates that sum to target. Numbers within the candidates
-        array can be used multiple times. The ending cases are:
+        The ask is to find all unique combinations that sum to target. Because the combinations need to be unique,
+        permutations of existing solutions are invalid.
 
-        1. The numbers sum to targets
-        2: The numbers exceed target
-        3: The current index exceeds the length of candidates
+        The key is determining how to include elements of the candidates array in a potential solution, especially since
+        elements can be re-used. Since the decision making of choosing vs. not choosing an element naturally creates
+        a tree, I can define each left/right sub-tree to satisfy some condition. In this case, the left sub-tree will
+        re-use the element at the current index and the right sub-tree will always increment the index.
 
-        Note that each candidate list must be unique. 
+        The time complexity can be derived as follows: For each element in the candidates array, we can make two choices.
+        The deepest we can go for any given candidate c is based on how many times c can divide target, so target/c. This
+        means that in the worst case, the maximum number of splits for a given c is t/c, so a big-O of 2^(t/c), which is
+        also the memory complexity
 
-        First question is how will I iterate through candidates to generate possible solutions. Another way to look at this
-        is at each index within candidates, what choices can I make? The first choice is to use the number at the current
-        index. The second choice is to advance the index to the next value. If I choose to use the current number, I need
-        to add it to the running sum and then recurse to solve the same problem with the current sum. If I choose to
-        advance the index, I increment the current index and recurse. This suggests a recursive nature to this problem.
-        Within each recursion, I am looping starting from a given index, a given running sum and the target. Note that 
-        because I can re-use elements, using breadth first search can lead to duplicates. Consider the example where
-        the q only has 1 set. On the first iteration, I pop the queue, add the element at the current index, then add
-        both sets back to the queue. On the next iteration if I haven't advanced the candidates list idx, I will regenerate
-        the set I just generated in addition to the new sets, very quickly leading to lots of duplicates.
-
-        If I am recursing, on each iteration, I want to take the following information: The current index into candidates,
-        the current running sum, the candidates array, the target, and the current candidate solution. Within each
-        recurse, I am either recursing into the next step of the problem, or iterating through the candidates array starting
-        at the given index.
-
-        The time complexity is determined as follows. At each index, I can make two choices: I can either use the current
-        element to build the solution, or I can progress to the next element. Making a binary decision at each element has
-        a time complexity of 2^n and I can do this at most n times.
-
-        time: O(n * 2^n)
-        memory: O(n * 2^n)
+        time: O(2^(t/c))
+        memory: O(t/c)
         """
-        return self._helper(0, candidates[0], [candidates[0]], candidates, target, [])
+        return self._helper(candidates, target, 0, ([], 0))
     
-    def _helper(
-        self,
-        cur_idx,
-        cur_sum,
-        cur_soln,
-        candidates,
-        target,
-        res
-    ):
+    def _helper(self, candidates, target, cur_idx, cur_soln) -> List[List[int]]:
         """
-        Helper function to calculate solutions. Returns a list containing running list of all valid solutions
+        Helper method to calculate solution. Takes candidates, target and current index as input. Additionally takes
+        cur_soln, which is a tuple of the current solution for this node along with the sum of that solution.
+        Returns a list of solutions found from this node
         """
-        # Handle terminating cases
+        # Base cases
+        cur_list, cur_sum = cur_soln
+        # Base case is empty list of 1D
+        base_soln = []
         if cur_idx >= len(candidates) or cur_sum > target:
-            return res
+            return base_soln
         if cur_sum == target:
-            res.append(cur_soln)
-            return res
+            return [cur_list]
         
-        # Include the current element into the running solution and recurse
-        cur_soln.append(candidates[cur_idx])
-        cur_sum += candidates[cur_idx]
-        self._helper(cur_idx, cur_sum, cur_soln[:], candidates, target, res)
-        # Remove current element from solution
-        cur_soln.pop()
-        cur_sum -= candidates[cur_idx]
+        # Build tree
+        # Left sub-tree re-uses the current element
+        left_list = cur_list.copy()
+        left_list.append(candidates[cur_idx])
+        left_res = self._helper(candidates, target, cur_idx, (left_list, cur_sum + candidates[cur_idx]))
 
-        # Make second choice to iterate starting at the current index
-        for i in range(cur_idx+1, len(candidates)):
-            cur_soln.append(candidates[i])
-            cur_sum += candidates[i]
-            self._helper(i, cur_sum, cur_soln, candidates, target, res.copy())
-            cur_soln.pop()
-            cur_sum -= candidates[i]
-        return res
+        # Right sub-tree increments the index
+        right_list = cur_list.copy()
+        right_res = self._helper(candidates, target, cur_idx+1, (right_list, cur_sum))
 
-
+        # Build solution for this node
+        if len(left_res) == 0 and len(right_res) != 0:
+            return right_res
+        elif len(left_res) != 0 and len(right_res) == 0:
+            return left_res
+        elif len(left_res) != 0 and len(right_res) != 0:
+            return left_res + right_res
+        else:
+            return base_soln
+        
