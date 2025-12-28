@@ -1,31 +1,24 @@
 class Solution:
     def maxSubArray(self, nums: List[int]) -> int:
         """
-        Hint: This problem can be solved in O(n) time. Consider the trivial case of an array with only positive numbers.
-        How would the solution be found? Now consider what happens when we introduce negative numbers. How does our
-        iteration change when we encounter negative numbers? What happens to the sum that drives this decision making?
-
-        For the trivial case, we would just add every number together. An array which only has positive number will have
-        a maximum sum by adding all the numbers in the array. What happens if there are negative numbers in the array?
-        If adding the current number to the sum of an existing sub array results in a number less than the current 
-        number, start over with the current element as the current element is greater than the sum of the previous
-        elements. This makes sense as a single element in the array is itself a sub-array. If this single element is
-        greater than the sum of the previous n-1 elements, by definition this is the solution to the problem.
-        If, however, the sum is greater than the current number, continue expanding the array even if the current element
-        is negative.
+        The ask is to find the sub-array that has the maximum sub and return this value. While iterating through the array,
+        I can see that if at some index, the number, or numbers preceeding this index are negative, I can disregard this
+        negative prefix since it won't contribute anything to the overall solution. If the current index is positive, it would
+        be better so simply consider the subarray that only includes this current index. This works even if the entire array
+        is negative because adding negative numbers together only makes the solution smaller, so it would always be optimal
+        to take the current index over a sum of negative values, or a negative prefix.
 
         time: O(n)
         memory: O(1)
         """
-        if len(nums) == 1:
-            return nums[0]
-        res = float(-inf)
-        cur_sum = 0
-        for n in nums:
-            if cur_sum + n < n:
-                cur_sum = n
+        max_sum = float("-inf")
+        cur_sum = float("-inf")
+        for i in range(len(nums)):
+            if cur_sum < 0:
+                cur_sum = nums[i]
             else:
-                cur_sum += n
-            res = max(cur_sum, res)
-        return res
+                cur_sum += nums[i]
+            max_sum = max(max_sum, cur_sum)
+            i += 1
+        return max_sum
         
