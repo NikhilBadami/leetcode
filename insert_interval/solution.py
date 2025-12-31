@@ -23,13 +23,11 @@ class Solution:
             return [newInterval]
         
         res = []
-        inserted = False
         for i in range(len(intervals)):
             if newInterval[1] < intervals[i][0]:
-                if not inserted:
-                    res.append(newInterval)
-                res.append(intervals[i])
-                inserted = True
+                res.append(newInterval)
+                # No need to continue iterating
+                return res + intervals[i:]
             elif intervals[i][1] < newInterval[0]:
                 res.append(intervals[i])
             else:
@@ -37,7 +35,6 @@ class Solution:
                 merge_start = min(newInterval[0], intervals[i][0])
                 merge_end = max(newInterval[1], intervals[i][1])
                 newInterval = [merge_start, merge_end]
-        if not inserted:
-            res.append(newInterval)
+        res.append(newInterval)
         return res
         
