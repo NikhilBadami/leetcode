@@ -1,34 +1,44 @@
 class Solution:
     def longestConsecutive(self, nums: List[int]) -> int:
         """
-        I'm given a list of unsorted numbers and need to find the longest consecutive elements sequence. The algorithm needs to run
-        in O(n) time, so I cannot sort the array. I need some way to order the elements. Can I hash each number to a list of elements
-        that come after it? No, because this would be an O(n^2) algorithm since I'd need to loop over the keys of the map to determine
-        which key it should be mapped to. The naive approach would be to sort the array and iterate starting from the beginning.
+        I'm given a list of unsorted integers and need to find the longest consecutive sequence of numbers. I am not allowed to sort
+        the input array as the algorithm needs to run in O(n) time.
 
-        Another way to think about this is I know that the longest possible sequence the array could create is the length of the
-        array itself. I could then get the minimum and maximum numbers and iterate in a range created by these bounds. On each
-        iteration, I check if the current number exists in the map. If it does, I begin counting the length of a sequence. For every
-        subsequent number that exists in the map, I continue increasing this counter, but if there is a break, the counter resets.
-        One problem with this approach is its not linear in the input of the array. For example, the input (1, 1001, 1002, 1003)
-        has an answer of [1001, 1002, 1003] for an array of length 4, but would perform 1004 operations to find the answer since the
-        min value is 1.
+        I can note a couple of things about this problem. First, the longest possible sequence that can be created is the length of
+        the input array itself. Second, I need to be able to identify the start of a sequence. Since I am only working with the
+        input array, the start of a sequence is a number whose value num-1 does not exist in the array. This is a good way to
+        identify starts because the sequence has to be consecutive, so if num-1 does not exist, any preceeding sequence breaks
+        at this point and a new sequence would be started.
+
+        To find the starts of sequences efficiently, I can process the input into a set. This way, as I iterate through the array,
+        I just check if num-1 is in the set. If it is, I know that this number cannot be the start of a sequence. If I find a
+        sequence start, I begin iterating from this number until this sequence either breaks or is as long as the input array itself.
+        Because I only iterate starting at sequence starts, I only process each number at most twice, leading to an O(n) solution.
+
+        time: O(n)
+        memory: O(n)
         """
-        longest = 0
-        if len(nums) == 0:
-            return longest
         s = set()
+        longest = 0
+        # Process nums into a set
         for n in nums:
             s.add(n)
         
-        _min = min(nums)
-        _max = max(nums)
-        cur_longest = 0
-        for i in range(_min, _max+1):
-            if i in s:
-                cur_longest += 1
-                longest = max(longest, cur_longest)
-            else:
+        # Iterate through nums again, this time to find sequence starts. Use the set instead of the input array
+        # this is because duplicates do no matter for the solution. For example, if 0 is the start of a sequence,
+        # it does not matter if there are multiple 0s as only one will ever be used 
+        for n in s:
+            if n-1 not in s:
+                # This is the start of a sequence
                 cur_longest = 0
+                for i in range(n, n+len(nums)):
+                    if i in s:
+                        cur_longest += 1
+                    else:
+                        break
+                longest = max(longest, cur_longest)
+                if longest == len(nums):
+                    # Short circuit since there cannot be a longer sequence
+                    return longest
         return longest
         
