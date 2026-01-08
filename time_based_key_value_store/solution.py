@@ -51,24 +51,12 @@ class TimeMap:
         # Check to see if the current timestamp is before any existing timestamp
         if timestamp < values[0][0]:
             return ""
-        
-        # Search for the timestamp if it exists
-        l, r = 0, len(values) - 1
-        while l <= r:
-            mid = l + (r - l) // 2
-            if values[mid][0] == timestamp:
-                return values[mid][1]
-            elif values[mid][0] > timestamp:
-                r = mid - 1
-            else:
-                l = mid + 1
 
         # If the timestamp wasn't found using the search above, I need to search for the most recently inserted value such that the timestamp
         # comes before the given timestamp. I'm searching for a value less than the current timestamp. If I find a value less than the current
         # timestmap, I should continue searching as there may be other values closer to the current timestamp. So the upper bound of this search
         # is the input timestamp. My conditions for searching are, if the mid point is greater than the timestmap, search to the left. If it is
-        # less than the timestamp, record this value and continue searching. This search operates with the assumption that the given timestamp
-        # doest not exist in the array. If it did, it would have been returned by the previous search
+        # less than the timestamp, record this value and continue searching.
         most_recent_timestamp = -1
         most_recent_value = ""
         l, r = 0, len(values) - 1
