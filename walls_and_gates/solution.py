@@ -1,53 +1,57 @@
 class Solution:
     def islandsAndTreasure(self, grid: List[List[int]]) -> None:
         """
-        I'm given an mxn matrix with three values representing either water, land or a treasure
-        chest. I need to find the distance of each land cell from its nearest treasure chest.
+        I'm given a grid that has water, land and treasure chests. I need to find the distance
+        of each land cell to its closest treasure chest.
 
-        I can start a breadth first search from each treasure cell. The values put in the queue
-        will be a tuple of (cell_val, distance) and the distance will be updated only if it is
-        less than the current distance of the cell. I maintain a visited set so that individual
-        searches do not process a given cell multiple times. This ensures that cells are
-        processed "level by level" and that the same distance is passed to each cell on the same
-        level.
+        I can use a breadth first search to find how far each land cell is from a treasure chest
+        starting at each individual chest. This is because bfs operates "level by level," meaning
+        that it searches all cells closest to the start first. This means that when a cell is
+        encountered, it is guaranteed to be the first time.
 
-        time: O(t) --> t is the number of chests in the grid
-        memory: O(m*n) --> worst case if every land cell is reachable from every other land cell
-                           all are stored in visited set
+        Because there can be multiple treasure chests, I should start the search from each
+        chest simultaneously. I can do this by making a pass over the grid first and adding all
+        chests to a queue. Information in the queue will be stored as tuples containing
+        the position of each cell as well as its current distance from a chest. Only land and
+        treasure chests will be added.
+
+        time: O(m*n) --> Each cell will only be processed twice
+        memory: O(m*n) --> Need to maintain a set of visited cells
         """
+        inf = 2147483647
         from collections import deque
+        q = deque()
+
+        # Make first pass over grid to find all chests
         for i in range(len(grid)):
             for j in range(len(grid[i])):
                 if grid[i][j] == 0:
-                    visited = set()
-                    self.bfs(grid, i, j, visited)
-        
-        return
-    
-    def bfs(self, grid, i, j, visited):
-        """
-        Helper function to run a bfs starting from the given cell. Modifies the grid in place
-        """
-        distance = 0
-        q = deque()
-        q.append((i, j, distance))
+                    q.append((i, j, 0))
+
+        # Process queue, finding all reachable land cells and updating their distance from their
+        # respective chests
+        visited = set()
         while len(q) != 0:
-            # Get size of "level" in queue
+            # Get size of current "level"
             size = len(q)
             for _ in range(size):
-                # Process current cell. Only update if it is land. Note that the search is
-                # initialized with the treasure cell
-                if grid[i][j] > 0:
-                    grid[i][j] = min(grid[i][j], distance)
-                    visited.add((i, j))
-                # Process each neighbor cell. Only add land cells to q
+                # Every cell in this level has same distance from source
                 i, j, distance = q.popleft()
-                if i - 1 >= 0 and grid[i-1][j] > 0 and (i-1, j) not in visited:
-                    q.append((i-1, j, distance + 1))
-                if i + 1 < len(grid) and grid[i+1][j] > 0 and (i+1, j) not in visited:
+                # Don't process visited nodes
+                if (i, j) in visited:
+                    continue
+                # Update cell distance from source and add to visited set
+                grid[i][j] = min(grid[i][j], distance)
+                visited.add((i, j))
+
+                # Process adjacent cells provided they are land
+                if i + 1 < len(grid) and grid[i+1][j] == inf:
                     q.append((i+1, j, distance + 1))
-                if j - 1 >= 0 and grid[i][j-1] > 0 and (i, j-1) not in visited:
-                    q.append((i, j-1, distance + 1))
-                if j + 1 < len(grid[i]) and grid[i][j+1] > 0 and (i, j+1) not in visited:
+                if i - 1 >= 0 and grid[i-1][j] == inf:
+                    q.append((i-1, j, distance + 1))
+                if j + 1 < len(grid[i]) and grid[i][j+1] == inf:
                     q.append((i, j+1, distance + 1))
+                if j - 1 >= 0 and grid[i][j-1] == inf:
+                    q.append((i, j-1, distance + 1))
+
         
