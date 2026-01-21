@@ -1,16 +1,32 @@
 class Solution:
     def findDuplicate(self, nums: List[int]) -> int:
         """
-        Straight forward approach would be to process the array into a set and then iterate the range [1,n] and find the duplicate like that but
-        this requires using O(n) extra space and the problem requires using O(1) extra space. A naive way would be to process each array element
-        individuall, i.e., for each element, check every other subsequent element to see if there is a duplicate (O(n^2)). Assuming sorting doesn't
-        count as modifying the array, I can sort the array and then make a single pass checking if the current element equals the element before 
-        it (O(nlog(n))). Both solutions have O(1) extra memory.    
+        I am given a list of integers containing n+1 integers in the range [1,n]. There is exactly one repeated number in the input array and I
+        need to find and return it. I cannot modify the array or use additional memory.
+
+        One way to do this would be to reformulate the problem such that each value in the array correspond to an index in the array. Because
+        I know that the input only contains numbers between 1 and n, and that there are n+1 numbers in the array, this guarantees that I will
+        not go out of bounds. Treating the numbers in the array as pointers to various indicies effectively turns the list into a linked list.
+        The duplicate number will form a cycle where the duplicate is the head of the cycle. I can apply Floyds algorithm to find the start of
+        this cycle, which will also be the duplicate number I am trying to return
+
+        time: O(n)
+        memory: O(1)
         """
-        # O(nlog(n)) solution
-        nums.sort()
-        for i in range(1, len(nums)):
-            if nums[i] == nums[i-1]:
-                return nums[i]
-        return -1
+        # Since I know that the list will have at least two elements, I don't need to do any up front edge case testing.
+        slow = 0
+        fast = 0
+        while True:
+            slow = nums[slow]
+            fast = nums[nums[fast]]
+            if slow == fast:
+                # Cycle found, break
+                break
         
+        # Find the start of the cycle
+        fast = 0
+        while slow != fast:
+            slow = nums[slow]
+            fast = nums[fast]
+        return fast
+
