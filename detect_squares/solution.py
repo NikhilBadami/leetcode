@@ -13,16 +13,14 @@ have the points (4,4) and (2,2) as my diagonal points. I know that the other poi
 points exist in the array. If they do, I can add this to the count of ways I can create a square. I continue until I've counted all possible ways
 to create a square.
 
-The search for a diagonal can be inefficient if I naively check within the bounds (0, 1000). How can I make this more efficient? I can keep track
-of a max x and y value for any point in the data structure and use this as my bounds for the search. For example, if I know the max X coordinate
-for any point in the structure is 5, the point (6,6) cannot exist in the data structure so there is no point searching beyond 5. Similarly, if
-the max y value for and point is 2, the point (3, 3) cannot exist. I can keep track of and update the max x and y value in the data structure
-on each add operation.
+The search for a diagonal can be inefficient if I naively check within the bounds (0, 1000). How can I make this more efficient? I can take
+advantage of the fact that any points on a diagonal have the same difference between their x and y coordinates. For example, say p1 = (1,1) and
+p2 = (3,3). The difference between their x and y coordinates is 2. Any points that fit this criteria are on the same diagonal.
 
 How do I store the points? I need to be able to efficiently look up points that exist within the data structure. I can accomplish this using a
 hash map that hashes each coordinate as a tuple.
 
-Finally, how do I handle duplicate points? I hash each coordinate pair to the count of times it occurrs in the datastructure. If I find a square
+Finally, how do I handle duplicate points? I hash each coordinate pair to the count of times it occurrs in the data structure. If I find a square
 that uses a point that has multiple occurrences, I look at the point with the lowest number of occurrences and add that to my count of squares.
 For example, if I have a square defined by (3,3), (2,2), (2,3) and (3,2) and point (3,2) has the lowest count of 2, then I can only create 2
 squares from this set of points.
@@ -42,10 +40,6 @@ class DetectSquares:
         This class initializes a hashmap to store points as well as a max x and y value, set to -1 initially
         """
         self.points = {}
-        self.max_x = -1
-        self.max_y = -1
-        self.min_x = 1001
-        self.min_y = 1001
 
     def add(self, point: List[int]) -> None:
         """
@@ -55,74 +49,29 @@ class DetectSquares:
         memory: O(n) --> n is the number of points the structure stores. Note that n memory is not used in this operation directly, but it is
                          referenced since we are adding to the total number of points the structure stores
         """
-        # Store point
         tup_point = tuple(point)
         self.points[tup_point] = self.points.get(tup_point, 0) + 1
-        # Update max x and y if applicable
-        self.max_x = max(self.max_x, tup_point[0])
-        self.max_y = max(self.max_y, tup_point[1])
-        # Update min x and y if applicable
-        self.min_x = min(self.min_x, tup_point[0])
-        self.min_y = min(self.min_y, tup_point[1])
 
     def count(self, point: List[int]) -> int:
         """
         Search for all sets of points that form an axis aligned square.
 
-        time: O(min(max_x, max_y))
+        time: O(n)
         memory: O(1)
         """
-        num_ways = 0
-        # Check if at least 3 distinct points exist in the structure
-        if len(self.points.keys()) < 3:
-            return num_ways
+        # Search through all points and check which points lie on a diagonal with the query point
+        px, py = point
+        # Check if difference between x and y coordinates is the same. If so, the points lie on a diagonal. I need to handle the edge case
+        # where the query point already exists in points. I should add an additional check to make sure the coordinates are not equal
+        res = 0
+        for p in self.points.keys():
+            dx, dy = p
+            if abs(px - dx) == abs(py - dy) and dx != px and dy != py:
+                # This is a valid point. Check to see if two other points can be found.
+                if (dx, py) in self.points.keys() and (px, dy) in self.points.keys():
+                    res += self.points[(dx, dy)] * self.points[(dx, py)] * self.points[(px, dy)]
+        return res
         
-        # Search for a diagonal point
-        # First search towards min(max_x, max_y)
-        tup_point = tuple(point)
-        for i in range(1, min(self.max_x, self.max_y)):
-            if (point[0] + i, point[1] + i) in self.points.keys():
-                # See if the companion points exist
-                diag_x = point[0] + i
-                diag_y = point[1] + i
-                # Check if point below diag point exists
-                if (diag_x, point[1]) in self.points.keys():
-                    # Only if this point exists, then I will chcek if the point above the query point exists
-                    # Find the min count of all the points
-                    pt1_count = self.points(tup_point)
-                    pt2_count = self.point((diag_x, diag_y))
-                    pt3_count = self.point((diag_x, point[1]))
-                    pt4_count = self.point((point[0], diag_y))
-                    min_count = min(
-                        pt1_count,
-                        pt2_count,
-                        pt3_count,
-                        pt4_count
-                    )
-                    num_ways += min_count
-        # Perform similar search towards smallest point
-        for i in range(1, max(self.min_x, self.min_y)):
-            if (point[0] - i, point[1] - i) in self.points.keys():
-                 # See if the companion points exist
-                diag_x = point[0] - i
-                diag_y = point[1] - i
-                # Check if point below diag point exists
-                if (diag_x, point[1]) in self.points.keys():
-                    # Only if this point exists, then I will chcek if the point above the query point exists
-                    # Find the min count of all the points
-                    pt1_count = self.points(tup_point)
-                    pt2_count = self.point((diag_x, diag_y))
-                    pt3_count = self.point((diag_x, point[1]))
-                    pt4_count = self.point((point[0], diag_y))
-                    min_count = min(
-                        pt1_count,
-                        pt2_count,
-                        pt3_count,
-                        pt4_count
-                    )
-                    num_ways += min_count
-        return num_ways
-
 
 # Your DetectSquares object will be instantiated and called as such:
 # obj = DetectSquares()
