@@ -44,12 +44,12 @@ class Solution:
         from collections import deque
         q = deque()
         q.append((i, j))
+        visited.add((i, j))
         while len(q) > 0:
             # Only process this "level" of nodes
             size = len(q)
             for _ in range(size):
                 r, c = q.popleft()
-                visited.add((r, c))
 
                 # Check if this cell meets conditions
                 # Check if cell is adjacent to pacific ocean
@@ -64,12 +64,16 @@ class Solution:
                 # Add new cells to search
                 if r - 1 >= 0 and (r-1, c) not in visited and heights[r-1][c] <= heights[r][c]:
                     q.append((r-1, c))
+                    visited.add((r-1, c))
                 if r + 1 < len(heights) and (r+1, c) not in visited and heights[r+1][c] <= heights[r][c]:
                     q.append((r+1, c))
+                    visited.add((r+1, c))
                 if c - 1 >= 0 and (r, c-1) not in visited and heights[r][c-1] <= heights[r][c]:
                     q.append((r, c-1))
+                    visited.add((r, c-1))
                 if c + 1 < len(heights[r]) and (r, c+1) not in visited and heights[r][c+1] <= heights[r][c]:
                     q.append((r, c+1))
+                    visited.add((r, c+1))
         return False
                 
         
