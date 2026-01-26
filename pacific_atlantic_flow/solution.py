@@ -16,64 +16,68 @@ class Solution:
         one exists, whereas a bfs is guaranteed to find the shortest path from a cell to some point to any other point in an unweighted graph,
         which this grid is since the cost of going in any direction is the same. Therefore, I will start a bfs from each cell.
 
-        While searching from a particular cell, I keep track of two variables, can_reach_pacific and can_reach_atlantic. If at any point, the
-        search encounters points in the relevant rows/columns, I set these variables to true. If they are both true, I add the cell to the
-        solution.
+        The problem with starting a search from every cell is that this solution will have O(n^2) since every cell in the grid will be processed
+        up to n times. This leads to a lot of repeated work. How can I elminate this repeated work? If I start the searches from the oceans
+        themselves, then every cell I can reach that respective ocean. I can start bfs using multi sources for each ocean. Pacific ocean
+        sources will be left column and top row. Atlantic sources will be right column and bottom row. I iterate until both searches are
+        exhausted. The solution is the intersection of the searches visited sets.
 
-        One last case to consider is how to handle row and column vectors. In these cases, every cell in the vector is a solution. The
-        algorithm should be able to pick up on this. 
-
-        time: O(n^2) --> I am starting a search from every cell, meaning that it is possible I visit every cell once from every other cell
-        memory: O(n) --> On any given search, I use at most n memory to track a visited set of nodes. 
+        time: O(m*n)
+        memory: O(m*n)
         """
-        # Loop through the heights array, starting a bfs from each cell
-        res = []
-        for i in range(len(heights)):
-            for j in range(len(heights[i])):
-                reach_both = self.bfs(heights, i, j, set())
-                if reach_both:
-                    res.append([i, j])
-        return res
-    
-    def bfs(self, heights, i, j, visited):
-        """
-        Helper function takes input grid, starting cell as well as a set of visited nodes. Performs bfs starting at the given coordinates.
-        Returns a boolean indicating if the cell can reach both oceans
-        """
-        reach_pacific, reach_atlantic = False, False
         from collections import deque
-        q = deque()
-        q.append((i, j))
-        visited.add((i, j))
+        # Create a queue and fill it with the sources for the pacific ocean
+        pacific_q = deque()
+        pacific_visited = set()
+        # Add top row
+        for j in range(len(heights[0])):
+            pacific_q.append((0, j))
+            pacific_visited.add((0, j))
+        # Add left column
+        for i in range(len(heights)):
+            pacific_q.append((i, 0))
+            pacific_visited.add((i, 0))
+        # Get the visited set for the pacific ocean
+        self._visit_cells(heights, pacific_q, pacific_visited)
+
+        # Create queue and fill with sources for atlantic ocean
+        atlantic_q = deque()
+        atlantic_visited = set()
+        # Add bottom row
+        bot_idx = len(heights) - 1
+        for j in range(len(heights[bot_idx])):
+            atlantic_q.append((bot_idx, j))
+            atlantic_visited.add((bot_idx, j))
+        # Add right column
+        right_idx = len(heights[0]) - 1
+        for i in range(len(heights)):
+            atlantic_q.append((i, right_idx))
+            atlantic_visited.add((i, right_idx))
+        self._visit_cells(heights, atlantic_q, atlantic_visited)
+        return list(atlantic_visited & pacific_visited)
+    
+    def _visit_cells(self, heights, q, visited):
+        """
+        Helper function takes the heights input as well as a queue already loaded with sources and performs bfs, populating a visited set.
+        Modifies visited in place
+        """
         while len(q) > 0:
-            # Only process this "level" of nodes
+            # Search current set of sources
             size = len(q)
             for _ in range(size):
-                r, c = q.popleft()
-
-                # Check if this cell meets conditions
-                # Check if cell is adjacent to pacific ocean
-                if r == 0 or c == 0:
-                    reach_pacific = True
-                if r == len(heights) - 1 or c == len(heights[r]) - 1:
-                    reach_atlantic = True
-                # Check stopping condition
-                if reach_pacific and reach_atlantic:
-                    return True
-                
-                # Add new cells to search
-                if r - 1 >= 0 and (r-1, c) not in visited and heights[r-1][c] <= heights[r][c]:
-                    q.append((r-1, c))
-                    visited.add((r-1, c))
-                if r + 1 < len(heights) and (r+1, c) not in visited and heights[r+1][c] <= heights[r][c]:
-                    q.append((r+1, c))
-                    visited.add((r+1, c))
-                if c - 1 >= 0 and (r, c-1) not in visited and heights[r][c-1] <= heights[r][c]:
-                    q.append((r, c-1))
-                    visited.add((r, c-1))
-                if c + 1 < len(heights[r]) and (r, c+1) not in visited and heights[r][c+1] <= heights[r][c]:
-                    q.append((r, c+1))
-                    visited.add((r, c+1))
-        return False
-                
+                i, j = q.popleft()
+                # Add in search cells. Since I am doing this problem in reverse, I can only add cells that are greater than or equal to the
+                # current cell
+                if i - 1 >= 0 and (i-1, j) not in visited and heights[i-1][j] >= heights[i][j]:
+                    q.append((i-1, j))
+                    visited.add((i-1, j))
+                if i + 1 < len(heights) and (i+1, j) not in visited and heights[i+1][j] >= heights[i][j]:
+                    q.append((i+1, j))
+                    visited.add((i+1, j))
+                if j - 1 >= 0 and (i, j-1) not in visited and heights[i][j-1] >= heights[i][j]:
+                    q.append((i, j-1))
+                    visited.add((i, j-1))
+                if j + 1 < len(heights[i]) and (i, j+1) not in visited and heights[i][j+1] >= heights[i][j]:
+                    q.append((i, j+1))
+                    visited.add((i, j+1))
         
