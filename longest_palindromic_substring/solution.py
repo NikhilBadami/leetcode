@@ -17,48 +17,29 @@ class Solution:
         time: O(n^2)
         memory: O(n)
         """
-        # Handle base case of strings of lengths 1 or 2
-        if len(s) == 1:
-            return s[0]
-        if len(s) == 2:
-            if s[0] == s[1]:
-                return s
-            else:
-                return s[1]
-        # Default value of 1 since a single character is always a palindrome
-        max_len = 1
-        max_l, max_r = 0, len(s) - 1
+        self.res = ""
+        self.max_len = 0
 
         # Start iteration from char 1 and end at the second to last character. This is because the first/last character cannot be the center of
         # a palindrome (they can only be expanded in one direction)
-        for i in range(1, len(s) - 1):
+        for i in range(len(s)):
             # Expand using only current index as center
-            l, r = i-1, i+1
-            palindrome_length, l, r = self.expand_palindrome(s, l, r)
-            if palindrome_length > max_len:
-                max_l = l
-                max_r = r
-                max_len = palindrome_length
-
+            l, r = i, i
+            self.expand_palindrome(s, l, r)
             # Expand using both current and adjacent character as center
-            l, r = i-1, i+2
-            palindrome_length, l, r = self.expand_palindrome(s, l, r)
-            if palindrome_length > max_len:
-                max_l = l
-                max_r = r
-                max_len = palindrome_length
-        return s[max_l:max_r+1]
+            l, r = i, i+1
+            self.expand_palindrome(s, l, r)
+        return self.res
     
     def expand_palindrome(self, s, l, r):
         """
         Helper function to expand the palindrome in s. Returns size of the palindrome and the left and right pointers
         """
         while l >= 0 and r < len(s) and s[l] == s[r]:
+            cur_len = (r - l) + 1
+            if cur_len > self.max_len:
+                self.max_len = cur_len
+                self.res = s[l:r+1]
             l -= 1
             r += 1
-        
-        # Search ends on invalid spaces, so move l and r back
-        l += 1
-        r -= 1
-        return r - l + 1, l, r
 
