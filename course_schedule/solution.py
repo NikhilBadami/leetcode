@@ -1,54 +1,58 @@
 class Solution:
     def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
         """
-        I am given an int representing the number of courses I need to complete, as well as a list of pre-requisites. The prerequesities are
-        listed as [a, b] where b is the prerequisite for course a. I need to determine if it is possible to take all the courses based on the
-        prerequisites.
+        I'm given a number of courses and a set of prerequisites and I need to determine whether it is possible to take all of the classes based
+        on the pre-reqs.
 
-        I can convert the prerequisite list into a graph by mapping each pre-req to a list of classes that it is a pre-req for. Then I can solve
-        the problem by iterating through this map and seeing if there are any cycles in the list. If there are, the schedule is impossible.
-        Otherwise, the schedule is valid.
+        I can solve this problem by converting the list of prereqs into an adjacency list, where each key in the graph is a prereq and its
+        value is a list of classes it is a prereq for. I can then traverse this list and search for any cycles. If there are any cycles,
+        the course schedule is not doable. If no cycles exist, the course schedule can be completed.
 
-        time: O(p^2) --> p is the number of pre-reqs.
-            - Imagine one long graph of pre-reqs, like a linked list. I would end up iterating this entire list once for each class
-        memory: O(p + n) --> Recursion stack is only as big as the number of pre-reqs and I will have n lists of pre-reqs at most
+        While processing the graph, I need to keep track of which nodes have already been verified to be completable. I can do this by tracking
+        a global visited, or "safe," set and a set tracking the current path of the search. The global safe set will allow us to avoid checking
+        nodes more than once and the path set will help us determine if a cycle exists on the current search.
+
+        time: O(n + p) --> n courses and p prereas
+        memory: O(n + p)
         """
-        # If there are no pre-reqs I can take all of the courses
-        if len(prerequisites) == 0:
-            return True
-        
-        # Process pre-reqs list into map
+        # Process pre-reqs into adjacency list
         graph = {}
         for n in range(numCourses):
             graph[n] = []
-        for r in prerequisites:
-            graph[r[1]].append(r[0])
+        for p in prerequisites:
+            graph[p[1]].append(p[0])
         
-        # Traverse the graph using dfs starting from each key
-        for c in graph.keys():
-            visited = set()
-            visited.add(c)
-            cycle = self._dfs(graph, c, visited)
+        # Process each key in the graph
+        safe = set()
+        for c in graph:
+            cycle = self._detect_cycle(graph, c, set(), safe)
             if cycle:
                 return False
         return True
     
-    def _dfs(self, graph, c, visited):
+    def _detect_cycle(self, graph, cl, path, safe) -> bool:
         """
-        Traverses the graph starting at the given class. If the list of pre-reqs is empty, returns True, Tracks a visited set. If any class
-        is seen more than once, returns False
+        Helper function used to find cycles using dfs. Takes the graph representation of the prereqs, the current class, the current path
+        and a global set tracking nodes that have already been verified to be completable. Returns true if a cycle is detected and false if no
+        cycle is detected
         """
-        if len(graph[c]) == 0:
+        # Base case adjacency list for this class is empty meaning this path is valid
+        if len(graph[cl]) == 0:
+            # No cycle found
+            return False
+        if cl in safe:
             return False
         
-        # Start search for each class this class is a pre-req for
-        for cl in graph[c]:
-            if cl in visited:
+        for c in graph[cl]:
+            if c in path:
                 return True
-            visited.add(cl)
-            cycle = self._dfs(graph, cl, visited)
-            if cycle:
-                return True
-            visited.remove(cl)
+            if c not in safe:
+                path.add(c)
+                cycle = self._detect_cycle(graph, c, path, safe)
+                if not cycle:
+                    safe.add(c)
+                    path.remove(c)
+                else:
+                    return True
         return False
         
