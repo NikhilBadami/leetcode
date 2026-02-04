@@ -4,60 +4,48 @@ class Solution:
         I'm given a number, n, as well as a list of edges between nodes in a graph. I need to
         determine if these edges form a valid tree.
 
-        What forms a valid tree? A valid tree has a single root. In a valid tree, every node
-        is reachable from the node (i.e., there are no nodes with no children/parents unless
-        the size of the tree is 1). In a valid tree, there are no "skip" connections, i.e., there
-        are no nodes that connect to any nodes more than one level below them like in example 2.
+        What forms a valid tree? A valid tree with n nodes has n-1 edges and no cycles. I can
+        determine if the graph is valid by checking that the number of edges is n-1, and that
+        there are no cycles in the tree.
 
-        I can generally solve this problem by using breadth first search starting at the root.
-        BFS will iterate over the tree level by level. If I track a visited set, I can check
-        to see if I visit any nodes more than once. If there are any skip connections I will
-        detect this because multiple nodes will have a particular node as a child (in a valid
-        tree, each node can only have one parent, bfs catches this too).
-
-        I can process the edges input into a graph by creating an adjacency list that hashes
-        the node value to the list of nodes that are its children.
-
-        How can I determine the root of the tree? The root of the tree is the node that has
-        no parent. I can detect this node as follows. Create a set with all node values inside it.
-        I then traverse the adjacency list and check to see which nodes appear in any of the
-        lists. If a node appears in any other nodes list, it has a parent and cannot be the root.
-        At the end of the iteration, if there is only one node, this must be the root. If there
-        is more than one, the tree is not valid.
-
-        time: O(n + e) --> n is the number of nodes and e is the number of edges
+        time: O(n + e)
         memory: O(n + e)
         """
-        # Create adjacency list out of input. Also create root set to find root
+        # If there is an invalid number of edges, return False
+        if len(edges) != n - 1:
+            return False
+        
+        # Process the edges into an adjacency list
         graph = {}
-        roots = set()
         for i in range(n):
             graph[i] = []
-            roots.add(i)
         for e in edges:
             graph[e[0]].append(e[1])
-            if e[1] in roots:
-                roots.remove(e[1])
-
-        # Detect root
-        if len(roots) != 1:
-            return False
-        root = roots.pop()
+            graph[e[1]].append(e[0])
         
-        # Traverse the graph using BFS
+        # Perform BFS to detect a cycle
         from collections import deque
         q = deque()
-        q.append(root)
+        # Since there is a valid number of edges, I'd be able to reach every node in the graph
+        # starting from any other node. This is because each edge is undirected. For simplicity,
+        # start at 0. Additionally, since each edge is undirected, to avoid processing the node
+        # we just came from, each entry will have a prev entry to avoid false positives in
+        # cycle detections
+        q.append((0, None))
         visited = set()
         while len(q) != 0:
             size = len(q)
             for _ in range(size):
-                node = q.popleft()
+                node, prev = q.popleft()
                 if node in visited:
                     return False
                 visited.add(node)
-                children = graph[node]
-                for child in children:
-                    q.append(child)
+                for child in graph[node]:
+                    if child != prev:
+                        q.append((child, node))
+
+        # If the tree is valid, I should have visited every node
+        if len(visited) != n:
+            return False
         return True
 
