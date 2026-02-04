@@ -1,49 +1,41 @@
 class Solution:
     def numDecodings(self, s: str) -> int:
         """
-        I'm given a string where each character is a digit that corresponds to a letter of the alphabet. I need to find all valid ways to
-        decode this string.
+        I'm given a string of numbers that can be decoded by mapping each number to an uppercase english character. The numbers could be decoded
+        either as individual numbers or as part of a two digit number.
 
-        I can start by creating a 1-indexed map of numbers mapping to characters. From there, I can consider the base cases. A string with only
-        1 character can only be decoded in 1 way. A string with only 2 characters can be decoded in only 2 ways. If the string has 3 characters,
-        I can either decode the string by treating the 3rd character as a single digit, or as the second digit in a two digit number using the
-        i-1 indexed number as the first digit. This creates a fibonacci recurrence where the number of ways to decode a string using a given
-        character is nw[i-1] + nw[i-2]
+        I can either use the number only as a single number, or as part of a two digit number. How do I know if I can use the number as part
+        of a two digit number? If the number is formed such that 10 <= n <= 26, then the digit can be used as a two digit number. If the number
+        is 0 or the preceeding digit is > 2, the digit cannot be used as a two digit number.
 
-        Note that there are some edge cases. If there is a 0 in the array, it is only valid if it has a valid preceeding number, in this case, 1
-        or 2. Additionally, any number that comes after 0 cannot use it and can only consider being used as a single number. Finally, we need
-        to consider the case if the number formed if > 26. In all of these cases, the number of ways the string can be decoded at that point
-        is just the number of ways from index - 2. The final answer is the last index of the memoization array.
+        The recurrence is fibonacci. If the number can be used as part of a two digit number, the number of ways to decode the string using the
+        current digit is nw[i-1] + nw[i-2]. If the digit cannot be used as part of a two digit number, the number of ways to decode does not
+        change from the previous entry
 
         time: O(n)
         memory: O(n)
         """
-        # Base cases
+        # Base case
         if s[0] == '0':
-            # No valid preceeding character is possible
+            # No valid way to decode this string
             return 0
-        if len(s) == 1:
-            return 1
-        if len(s) == 2:
-            return 2 if s[1] > '0' and s[1] <= '6' and s[0] <= '2' else 1
         
-        # Create array hold number of possible solutions at each character
-        res = [0] * len(s)
-        res[0] = 1
-        res[1] = 2 if s[0] == '1' or s[0] == '2' else 1
-        for i in range(2, len(s)):
+        # The string can never be empty, but we handle a case where there is an empty string since it makes setting up the base cases easier
+        dp = [0] * (len(s) + 1)
+        dp[0] = 1
+        dp[1] = 1
+        for i in range(1, len(s)):
+            # Check to see if the current digit can be used as a two digit or single digit number
+            # If the current character is not 0, it can definitely be used as a single character
             if s[i] == '0':
-                # Preceeding character must be valid, otherwise the string cannot be decoded
-                if s[i-1] != '1' and s[i-1] != '2':
+                # If the preceeding character is a 1 or a 2, the string is still valid otherwise it is invalid
+                if s[i-1] == '1' or s[i-1] == '2':
+                    dp[i+1] = dp[i-1]
+                else:
                     return 0
-                else:
-                    res[i] = res[i-2]
             else:
-                if s[i] >= '7':
-                    res[i] = res[i-1]
-                elif s[i-1] != '1' and s[i-1] != '2' or s[i-1] == '0':
-                    res[i] = res[i-2]
-                else:
-                    res[i] = res[i-1] + res[i-2]
-        return res[-1]
-
+                # If the digit is not 0, it can definitely be used as a single digit
+                dp[i+1] += dp[i]
+                if (s[i-1] == '1') or (s[i-1] == '2' and s[i] < '7'):
+                    dp[i+1] += dp[i-1]
+        return dp[-1]
