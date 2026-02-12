@@ -1,53 +1,81 @@
 class Solution:
     def findRedundantConnection(self, edges: List[List[int]]) -> List[int]:
         """
-        I am given an undirected graph represented as a list of edges. Within the context of this problem, a tree is an undirected graph that has
-        no cycles. I need to determine one edge to remove from the input graph to make it a valid tree.
+        I am given a graph that started as a tree, where a tree is defined as an undirected graph that is connected and has no cycles. A single
+        edge has been added to this tree that breaks the tree property described earlier. I need to identify an edge that can be removed so that
+        the graph is a tree again. If there are multiple possible edges, I should return the last edge that occurs in the input.
 
-        I can do this by first identifying the portion of the graph that is a cycle. For example, as I am searching, if I encounter a node that
-        I have already visited, then I know that this node and the other end the edge that put this node in my search queue are a valid edge
-        to be removed. Note that edges are represented as [a_i, b_i] such that a_i < b_i.
+        Since this graph was a tree that was connected and had no cycles, I know that adding an additional edge must introduce a cycle somewhere
+        in the graph. This means that this problem is really a cycle detection problem. Since I specifically want to identify the last edge
+        in the input that could solve this problem, I can use the union find datastructure.
 
-        I will need to convert the edges list into an adjacency list for efficient processing. Nodes are 1-indexed. I can find the
-        largest value in the graph by iterating through edges and checking the second value of the edge (since the second value is always
-        larger).
+        Union-Find is a data structure that tracks various sets of nodes. This data structure has two key functions: union and find. The union
+        operation takes two nodes and combines them into a single set. If the nodes were already part of their own larger sets, these
+        two sets are joined together. The find operation is used to find the parent of a given node which could be itself, or the parent of
+        the cluster it is a part of.
+
+        This datastructure can be used to find cycles as follows: I can iterate through the edges input and union the endpoints of each edge
+        together. As I iterate through, if I find an edge that contains endpoints that are already part of the same set, I know that this
+        edge both introduces a cycle into the graph and can be removed and meets the requirement of the problem to return the last occurrence of
+        a possible answer.
+
+        To improve the efficiency of the problem, I can use path compression and union by rank. Path compression makes it so that each node in 
+        the cluster points to the root of that cluster. For example, say nodes 1 and 2 are unioned together with 1 as the parent of the set. If
+        2 and 3 are then unioned together, instead of setting 2 as the parent of 3, I set the parent of 3 to be 1, since 1 is the parent of the
+        larger set.
+
+        Union by rank means that smaller set are added to larger sets. So 3 is added to the set containing 1 and 2 since that set is larger. With
+        these efficiencies added, the time complexity of the union and find operations is near constant.
 
         time: O(n + e)
         memory: O(n + e)
         """
-        # Find largest value in graph
-        n = 0
+        # A connected tree has exactly n-1 edges, so a tree with a single added edge has n edges and n nodes
+        n = len(edges)
+        # Use array to track initial parents of nodes, which is themselves. This array is 1-indexed i.e., 0 is never used
+        self.parents = [i for i in range(n + 1)]
+        # Track size of each cluster based on parent. Each size is 1 since each node is initially its own cluster and its own parent
+        self.sizes = [1] * (n+1)
         for e in edges:
-            n = max(n, e[1])
-        
-        # Build adjacency list
-        graph = {}
-        for i in range(1, n+1):
-            graph[i] = []
-        for e in edges:
-            graph[e[0]].append(e[1])
-            graph[e[1]].append(e[0])
-        
-        # Search graph for cycles. When a cycle is found, remove the edge that led to the cycle detection
-        from collections import deque
-        q = deque()
-        visited = set()
-        # Since the graph id guaranteed to be connected, I can pick any node to start from
-        q.append((1, None))
-        while len(q) > 0:
-            size = len(q)
-            for _ in range(size):
-                node, prev = q.popleft()
-                if node in visited:
-                    # Found a valid edge to remove
-                    return [
-                        min(node, prev),
-                        max(node, prev)
-                    ]
-                visited.add(node)
-                for neighbor in graph[node]:
-                    q.append((neighbor, node))
+            n1, n2 = e
+            if not self.union(n1, n2):
+                return e
 
-        # Default case that should never be reached
-        return []
+    
+    def union(self, n1, n2):
+        """
+        A modified union operation that suits the purposes of this problem. Takes two nodes n1 and n2 and checks to see if they have the same
+        parent. If they have the same parent, they are already part of the same set and adding the edge that triggered this union operation
+        introduces a cycle to the graph. This function should return False and the edge that triggered this call is the answer to the problem.
+
+        If the nodes are not part of the same set, they should be unioned together following the principles of union by rank described above
+        """
+        par1 = self.find(n1)
+        par2 = self.find(n2)
+        if par1 == par2:
+            # This edge introduces a cycle because these nodes are already part of the same group
+            return False
+        # Union together these two nodes. The smaller set is added to the larger set
+        if self.sizes[par1] > self.sizes[par2]:
+            # Union set 2 into set 1
+            self.parents[par2] = par1
+            self.sizes[par1] += self.sizes[par2]
+        else:
+            self.parents[par1] = par2
+            self.sizes[par2] += self.sizes[par1]
+        return True
+    
+    def find(self, n):
+        """
+        Finds the parent of the given node. Also performs path compression by updating the parent of nodes to be the parent of the overall set
+        during processing.
+        """
+        # Base case is if the parent of a node is itself. This means this is the root of the cluster
+        if n == self.parents[n]:
+            # Return this node as the root of the cluster
+            return n
+        par = self.find(self.parents[n])
+        # This line performs path compression. Any node in this cluster should have the root parent as its direct parent
+        self.parents[n] = par
+        return par
         
