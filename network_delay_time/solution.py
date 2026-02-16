@@ -10,10 +10,11 @@ class Solution:
 
         To determine the minimum time I can do the following. I can use a priority queue to perform breadth first search starting from node
         k. Each entry into the queue will be a tuple of the node and its current distance from the starting node k. Nodes will be processed in
-        priority of their distance from k. For each "level" of the search, I can track the maximum time of this level since this time represents
-        the minimum amount of time it takes the signal to reach all nodes in this level. The final result of this variable is the overall answer.
+        priority of their distance from k. Because I am doing a BFS, the first time I encounter a node is guaranteed to be the first time that
+        node is ever seen. I can record the minimum time for each node to be reached in a hash map. Once each node has been visited, I can
+        iterate through this hash map and find the largest value
 
-        time: O(nlog(n)) --> Each node is only processed once
+        time: O(elog(n)) --> Each node is only processed once
         memory: O(n) --> priority queue and unvisited set
         """
         # Process nodes into an unvisited set
@@ -36,7 +37,7 @@ class Solution:
 
         # Perform bfs
         heapq.heappush(pq, (0, k))
-        min_time = 0
+        min_times = {i: float("inf") for i in range(1, n+1)}
         visited = set()
         while len(pq) != 0:
             # Get current size of "level"
@@ -47,7 +48,7 @@ class Solution:
                 if node in unvisited:
                     unvisited.remove(node)
                 visited.add(node)
-                min_time = max(min_time, time)
+                min_times[node] = min(min_times[node], time)
                 for neighbor in graph[node]:
                     if neighbor['node'] not in visited:
                         heapq.heappush(pq, (time + neighbor['time'], neighbor['node']))
@@ -55,5 +56,8 @@ class Solution:
         # Check if all nodes were visited
         if len(unvisited) != 0:
             return -1
+        min_time = 0
+        for key in min_times.keys():
+            min_time = max(min_times[key], min_time)
         return min_time
         
